@@ -1,6 +1,6 @@
 # 🏢 Employee Management System — Salesforce
 
-A **menu-driven Employee Management System** built on the Salesforce platform using the **Model-View-Controller (MVC)** architecture. This project demonstrates how to create a custom object, build Apex backend logic, design a Visualforce UI, and run console-based tests — all within the Salesforce ecosystem.
+A **menu-driven Employee Management System** built on the Salesforce platform using the **Model-View-Controller (MVC)** architecture. This project covers full CRUD operations via an Apex backend, a Visualforce frontend, and a simulated menu-driven console using Execute Anonymous.
 
 ---
 
@@ -9,25 +9,20 @@ A **menu-driven Employee Management System** built on the Salesforce platform us
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Step 1 — Data Model Setup](#step-1--data-model-setup-the-database)
-- [Step 2 — Backend Logic (Apex Controller)](#step-2--backend-logic-apex-controller)
-- [Step 3 — User Interface (Visualforce Page)](#step-3--user-interface-visualforce-page)
-- [Step 4 — Console-Based Testing](#step-4--console-based-testing)
+- [Step 1 — Create the Employee Object](#step-1--create-the-employee-object)
+- [Step 2 — Create the Apex Controller (CRUD Logic)](#step-2--create-the-apex-controller-crud-logic)
+- [Step 3 — Implementing the Menu](#step-3--implementing-the-menu)
+- [Step 4 — Testing & Logs](#step-4--testing--logs)
+- [Step 5 — Apex Controller for Visualforce](#step-5--apex-controller-for-visualforce)
+- [Step 6 — The Visualforce Page](#step-6--the-visualforce-page)
+- [Key Concepts](#key-concepts)
 - [Project Structure](#project-structure)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [License](#license)
 
 ---
 
 ## Overview
 
-This project implements a fully functional Employee Management System inside Salesforce using:
-
-- A **Custom Object** (`Employee__c`) as the data layer
-- An **Apex Controller** (`EmployeeController`) as the business logic layer
-- A **Visualforce Page** (`EmployeeManagement`) as the presentation layer
-- An **Anonymous Apex Script** for simulating a menu-driven console application
+This project simulates a menu-driven Employee Management System inside Salesforce. Using a numbered `choice` variable in the Execute Anonymous window, users can run ADD, VIEW, UPDATE, and DELETE operations — mimicking the behavior of a traditional console menu without needing `scanf` or `cin`.
 
 ---
 
@@ -35,9 +30,9 @@ This project implements a fully functional Employee Management System inside Sal
 
 | Layer | Technology |
 | :--- | :--- |
-| Platform | Salesforce (any edition with Apex access) |
-| Backend | Apex (Salesforce's Java-like language) |
-| Frontend | Visualforce Pages |
+| Platform | Salesforce (Developer Org) |
+| Backend | Apex Classes |
+| Frontend | Visualforce Page |
 | Database | Salesforce Custom Object (`Employee__c`) |
 | Testing | Execute Anonymous (Developer Console) |
 
@@ -47,94 +42,98 @@ This project implements a fully functional Employee Management System inside Sal
 
 ```
 ┌────────────────────────────────────────────┐
-│               Visualforce Page             │  ← View (UI)
-│           (EmployeeManagement.vfp)         │
+│             Visualforce Page               │  ← View (UI)
+│          (EmployeeManagement.page)         │
 └───────────────────┬────────────────────────┘
                     │
                     ▼
 ┌────────────────────────────────────────────┐
-│              Apex Controller               │  ← Controller (Logic)
-│           (EmployeeController.cls)         │
+│           Apex Controller                  │  ← Controller (Logic)
+│    (EmployeeManager / EmployeeController)  │
 └───────────────────┬────────────────────────┘
                     │
                     ▼
 ┌────────────────────────────────────────────┐
-│           Salesforce Custom Object         │  ← Model (Data)
-│               (Employee__c)               │
+│         Salesforce Custom Object           │  ← Model (Data)
+│              (Employee__c)                 │
 └────────────────────────────────────────────┘
 ```
 
 ---
 
-## Step 1 — Data Model Setup (The Database)
+## Step 1 — Create the Employee Object
 
-Create the custom object and fields to store employee data.
+First, you need a place to store the data. While you could use the standard `Contact` object, creating a Custom Object is better practice for assignments.
 
 ### 1.1 Create the Custom Object
 
-1. Log in to your Salesforce org.
-2. Navigate to **Setup** → search for **Object Manager** → click **Create** → **Custom Object**.
-3. Fill in the details:
-   - **Label:** `Employee`
-   - **Plural Label:** `Employees`
-   - **Record Name:** `Employee ID`
-   - **Data Type:** `Text`
-4. Click **Save**.
+1. Go to **Setup** → **Object Manager** → **Create** → **Custom Object**.
+2. **Label:** `Employee`
+3. **Plural Label:** `Employees`
+4. **Record Name:** `Employee ID` (Data Type: `Text` or `Auto-Number`)
+5. Click **Save**.
 
-### 1.2 Create Custom Fields
+### 1.2 Add Custom Fields
 
-Go to **Fields & Relationships** on the `Employee__c` object and add the following fields:
+Navigate to **Fields & Relationships** on the `Employee__c` object and create the following:
 
-| Field Label | API Name | Data Type | Notes |
-| :--- | :--- | :--- | :--- |
-| Employee Name | `Employee_Name__c` | Text(100) | Required |
-| Email | `Email__c` | Email | — |
-| Birth Date | `Birth_Date__c` | Date | — |
-| Department | `Department__c` | Picklist | Values: `IT`, `HR`, `Sales`, `Finance` |
-
-> **Tip:** For the `Department__c` picklist, add all four values (`IT`, `HR`, `Sales`, `Finance`) when prompted during field creation.
+| Field Label | API Name | Data Type |
+| :--- | :--- | :--- |
+| Employee Name | `Employee_Name__c` | Text(100) |
+| Email | `Email__c` | Email |
+| Birth Date | `Birth_Date__c` | Date |
+| Department | `Department__c` | Picklist (`IT`, `HR`, `Sales`, `Finance`) |
 
 ---
 
-## Step 2 — Backend Logic (Apex Controller)
+## Step 2 — Create the Apex Controller (CRUD Logic)
 
-The Apex Controller acts as the "brain" of the application — handling data insertion and retrieval.
+This class contains the logic to **Create, Read, Update, and Delete (CRUD)** employee records.
 
 ### 2.1 Create the Apex Class
 
-1. Open the **Developer Console** (`Setup` → `Developer Console`).
+1. Open the **Developer Console** (Gear icon → Developer Console).
 2. Go to **File** → **New** → **Apex Class**.
-3. Name it: `EmployeeController`
-4. Replace the default code with the following:
+3. Name it: `EmployeeManager`
+4. Paste the following code:
 
 ```apex
-public class EmployeeController {
-
-    // Properties bound to the Visualforce page
-    public Employee__c emp { get; set; }
-    public List<Employee__c> empList { get; set; }
-
-    // Constructor: initializes a blank employee and loads the list
-    public EmployeeController() {
-        emp = new Employee__c();
-        refreshList();
-    }
-
-    // Queries all employee records, ordered by most recently created
-    public void refreshList() {
-        empList = [
-            SELECT Name, Employee_Name__c, Email__c, Department__c 
-            FROM Employee__c 
-            ORDER BY CreatedDate DESC
-        ];
-    }
-
-    // Inserts the new employee record, clears the form, and refreshes the list
-    public PageReference saveEmployee() {
+public class EmployeeManager {
+    
+    // 1. Add Employee
+    public static void addEmployee(String name, String email, Date dob, String dept) {
+        Employee__c emp = new Employee__c(
+            Employee_Name__c = name,
+            Email__c = email,
+            Birth_Date__c = dob,
+            Department__c = dept
+        );
         insert emp;
-        emp = new Employee__c(); // Reset form fields
-        refreshList();
-        return null;
+        System.debug('Employee added successfully! ID: ' + emp.Id);
+    }
+
+    // 2. View All Employees
+    public static void viewEmployees() {
+        List<Employee__c> empList = [SELECT Name, Employee_Name__c, Email__c, Department__c FROM Employee__c];
+        System.debug('--- Employee List ---');
+        for(Employee__c e : empList) {
+            System.debug('ID: ' + e.Name + ' | Name: ' + e.Employee_Name__c + ' | Dept: ' + e.Department__c);
+        }
+    }
+
+    // 3. Update Employee Department
+    public static void updateDepartment(String empId, String newDept) {
+        Employee__c emp = [SELECT Id FROM Employee__c WHERE Name = :empId LIMIT 1];
+        emp.Department__c = newDept;
+        update emp;
+        System.debug('Department updated for ID: ' + empId);
+    }
+
+    // 4. Delete Employee
+    public static void deleteEmployee(String empId) {
+        Employee__c emp = [SELECT Id FROM Employee__c WHERE Name = :empId LIMIT 1];
+        delete emp;
+        System.debug('Employee deleted.');
     }
 }
 ```
@@ -143,41 +142,148 @@ public class EmployeeController {
 
 ---
 
-## Step 3 — User Interface (Visualforce Page)
+## Step 3 — Implementing the Menu
 
-The Visualforce page provides the frontend form and table for users to add and view employees.
+In Salesforce, there is no standard `scanf` or `cin` for real-time console input. To simulate a menu-driven system for an assignment, use a **Switch/If-Else block** in the Execute Anonymous window.
 
-### 3.1 Create the Visualforce Page
+### How to Run
 
-1. In the **Developer Console**, go to **File** → **New** → **Visualforce Page**.
-2. Name it: `EmployeeManagement`
-3. Replace the default markup with the following:
+1. Open the **Developer Console**.
+2. Press `Ctrl + E` (Windows) or `Cmd + E` (Mac) to open the **Execute Anonymous** window.
+3. Paste the following template and **change the `choice` number** to test different operations:
+
+```apex
+// --- MENU SELECTION ---
+Integer choice = 1; // Change this number to test different features
+
+// Input Data
+String name = 'John Doe';
+String email = 'john@example.com';
+Date dob = Date.newInstance(1995, 05, 20);
+String dept = 'IT';
+String empIdToTarget = 'EMP-0001'; // Use an actual ID from your records
+
+switch on choice {
+    when 1 {
+        EmployeeManager.addEmployee(name, email, dob, dept);
+    }
+    when 2 {
+        EmployeeManager.viewEmployees();
+    }
+    when 3 {
+        EmployeeManager.updateDepartment(empIdToTarget, 'HR');
+    }
+    when 4 {
+        EmployeeManager.deleteEmployee(empIdToTarget);
+    }
+    when else {
+        System.debug('Invalid Choice');
+    }
+}
+```
+
+### Menu Reference
+
+| Choice | Operation | Description |
+| :---: | :--- | :--- |
+| `1` | Add Employee | Inserts a new `Employee__c` record |
+| `2` | View All | Queries and prints all employee records |
+| `3` | Update Department | Updates the department for a given Employee ID |
+| `4` | Delete Employee | Deletes the record matching the given Employee ID |
+
+---
+
+## Step 4 — Testing & Logs
+
+1. After pasting your script, click **Execute** in the Execute Anonymous window.
+2. Check the **Open Log** checkbox before executing.
+3. In the log viewer, check the **Debug Only** checkbox to filter output.
+4. You will see the output of your operations, for example:
+
+```
+USER_DEBUG | Employee added successfully! ID: a01XXXXXXXXXXXXXXX
+USER_DEBUG | --- Employee List ---
+USER_DEBUG | ID: EMP-0001 | Name: John Doe | Dept: IT
+```
+
+---
+
+## Step 5 — Apex Controller for Visualforce
+
+This updated controller uses properties (`get; set;`) so the Visualforce page can bind to and interact with the Apex code.
+
+### 5.1 Create the Apex Class
+
+1. In the **Developer Console**, go to **File** → **New** → **Apex Class**.
+2. Name it: `EmployeeController`
+3. Paste the following:
+
+```apex
+public class EmployeeController {
+    public Employee__c emp {get; set;}
+    public List<Employee__c> empList {get; set;}
+
+    public EmployeeController() {
+        emp = new Employee__c();
+        refreshList();
+    }
+
+    public void refreshList() {
+        empList = [SELECT Name, Employee_Name__c, Email__c, Department__c, Birth_Date__c 
+                   FROM Employee__c ORDER BY CreatedDate DESC];
+    }
+
+    public PageReference saveEmployee() {
+        try {
+            insert emp;
+            emp = new Employee__c(); // Clear form
+            refreshList();
+        } catch(Exception e) {
+            ApexPages.addMessages(e);
+        }
+        return null;
+    }
+}
+```
+
+4. Click **Save**.
+
+---
+
+## Step 6 — The Visualforce Page
+
+This page creates a simple input form and a table to display results, acting as your visual "Menu."
+
+### 6.1 Create the Visualforce Page
+
+1. Go to **Setup** → search **Visualforce Pages** → click **New**.
+2. **Name:** `EmployeeManagement`
+3. Paste the following markup:
 
 ```xml
 <apex:page controller="EmployeeController">
     <apex:form>
+        <apex:pageMessages />
+        
         <apex:pageBlock title="Employee Management System">
-
-            <!-- ADD EMPLOYEE FORM -->
-            <apex:pageBlockSection title="Add Employee" columns="1">
+            <!-- Input Section -->
+            <apex:pageBlockSection title="Add New Employee" columns="1">
                 <apex:inputField value="{!emp.Employee_Name__c}"/>
                 <apex:inputField value="{!emp.Email__c}"/>
+                <apex:inputField value="{!emp.Birth_Date__c}"/>
                 <apex:inputField value="{!emp.Department__c}"/>
-                <apex:commandButton 
-                    action="{!saveEmployee}" 
-                    value="Add Employee" 
-                    reRender="empTable"/>
+                <apex:commandButton action="{!saveEmployee}" value="Add Employee" reRender="empTable, empFields"/>
             </apex:pageBlockSection>
 
-            <!-- EMPLOYEE RECORDS TABLE -->
+            <!-- Display Section -->
             <apex:pageBlockSection title="Employee Records" columns="1" id="empTable">
                 <apex:pageBlockTable value="{!empList}" var="e">
-                    <apex:column value="{!e.Name}"              headerValue="Employee ID"/>
-                    <apex:column value="{!e.Employee_Name__c}"  headerValue="Name"/>
-                    <apex:column value="{!e.Department__c}"     headerValue="Department"/>
+                    <apex:column value="{!e.Name}"/>
+                    <apex:column value="{!e.Employee_Name__c}"/>
+                    <apex:column value="{!e.Email__c}"/>
+                    <apex:column value="{!e.Department__c}"/>
                 </apex:pageBlockTable>
             </apex:pageBlockSection>
-
         </apex:pageBlock>
     </apex:form>
 </apex:page>
@@ -185,7 +291,7 @@ The Visualforce page provides the frontend form and table for users to add and v
 
 4. Click **Save**.
 
-### 3.2 Access the Page
+### 6.2 Access the Page
 
 Navigate to:
 ```
@@ -194,54 +300,15 @@ https://<your-org-domain>.salesforce.com/apex/EmployeeManagement
 
 ---
 
-## Step 4 — Console-Based Testing
+## Key Concepts
 
-Simulate a menu-driven console application using the **Execute Anonymous** window.
-
-### 4.1 Open Execute Anonymous
-
-1. Open the **Developer Console**.
-2. Press `Ctrl + E` (Windows) or `Cmd + E` (Mac) to open the Execute Anonymous window.
-
-### 4.2 Available Operations
-
-Change the `operation` variable to run the desired command.
-
-#### ➕ ADD — Insert a New Employee
-
-```apex
-String operation = 'ADD';
-
-if (operation == 'ADD') {
-    Employee__c e = new Employee__c(
-        Employee_Name__c = 'John Doe',
-        Email__c         = 'john@example.com',
-        Department__c    = 'IT'
-    );
-    insert e;
-    System.debug('✅ Employee added with ID: ' + e.Id);
-}
-```
-
-#### 📋 VIEW — List All Employees
-
-```apex
-String operation = 'VIEW';
-
-if (operation == 'VIEW') {
-    List<Employee__c> listEmp = [
-        SELECT Name, Employee_Name__c, Department__c 
-        FROM Employee__c
-    ];
-    for (Employee__c emp : listEmp) {
-        System.debug('👤 Name: ' + emp.Employee_Name__c + 
-                     ' | ID: '   + emp.Name + 
-                     ' | Dept: ' + emp.Department__c);
-    }
-}
-```
-
-> **View Debug Logs:** After clicking **Execute**, open the **Logs** panel at the bottom of the Developer Console. Click on the latest log entry and filter by `DEBUG` to see the output.
+| Concept | Description |
+| :--- | :--- |
+| **SOQL** | `[SELECT ... FROM ...]` — Salesforce Object Query Language used to retrieve records |
+| **DML** | `insert`, `update`, `delete` — Data Manipulation Language commands for modifying records |
+| **`__c` suffix** | Always appended to API names of custom fields and objects (e.g., `Email__c`, `Employee__c`) |
+| **`reRender`** | Refreshes only the specified section of the page without a full reload |
+| **`ApexPages.addMessages`** | Displays caught exceptions on the Visualforce page via `<apex:pageMessages />` |
 
 ---
 
@@ -251,13 +318,14 @@ if (operation == 'VIEW') {
 salesforce-employee-management/
 │
 ├── classes/
-│   └── EmployeeController.cls       # Apex Controller (MVC - Controller)
+│   ├── EmployeeManager.cls          # Static CRUD methods (used in Execute Anonymous)
+│   └── EmployeeController.cls       # Controller bound to the Visualforce page
 │
 ├── pages/
-│   └── EmployeeManagement.page      # Visualforce Page (MVC - View)
+│   └── EmployeeManagement.page      # Visualforce UI — form + records table
 │
 ├── objects/
-│   └── Employee__c/                 # Custom Object (MVC - Model)
+│   └── Employee__c/
 │       └── fields/
 │           ├── Employee_Name__c.field-meta.xml
 │           ├── Email__c.field-meta.xml
@@ -269,39 +337,4 @@ salesforce-employee-management/
 
 ---
 
-## Features
-
-- ✅ **Add Employee** — Insert new employee records via form or Apex script
-- ✅ **View All Employees** — Display all records in a sortable table
-- ✅ **Auto-refresh** — Table updates without a full page reload using `reRender`
-- ✅ **Picklist Department** — Controlled vocabulary for department selection
-- ✅ **MVC Architecture** — Clean separation of data, logic, and presentation
-- ✅ **Console Testing** — Menu-driven anonymous Apex for quick testing
-
----
-
-## Screenshots
-
-> _Add screenshots of your Salesforce org here after setup._
-
-| Visualforce Page — Add Form | Visualforce Page — Records Table |
-| :---: | :---: |
-| _(screenshot)_ | _(screenshot)_ |
-
----
-
-## Prerequisites
-
-- A Salesforce Developer org (free at [developer.salesforce.com](https://developer.salesforce.com))
-- Access to **Developer Console**
-- Basic knowledge of Apex and Visualforce
-
----
-
-## License
-
-This project is intended for educational purposes. Feel free to fork and extend it.
-
----
-
-> Built with ❤️ on the Salesforce Platform using Apex MVC
+> Built for educational purposes on the Salesforce Platform using Apex MVC.
