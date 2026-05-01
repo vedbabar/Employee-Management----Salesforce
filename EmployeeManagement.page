@@ -1,0 +1,26 @@
+<apex:page controller="EmployeeController">
+    <apex:form>
+        <apex:pageMessages />
+        
+        <apex:pageBlock title="Employee Management System">
+            <!-- Input Section -->
+            <apex:pageBlockSection title="Add New Employee" columns="1">
+                <apex:inputField value="{!emp.Employee_Name__c}"/>
+                <apex:inputField value="{!emp.Email__c}"/>
+                <apex:inputField value="{!emp.Birth_Date__c}"/>
+                <apex:inputField value="{!emp.Department__c}"/>
+                <apex:commandButton action="{!saveEmployee}" value="Add Employee" reRender="empTable, empFields"/>
+            </apex:pageBlockSection>
+
+            <!-- Display Section -->
+            <apex:pageBlockSection title="Employee Records" columns="1" id="empTable">
+                <apex:pageBlockTable value="{!empList}" var="e">
+                    <apex:column value="{!e.Name}"/>
+                    <apex:column value="{!e.Employee_Name__c}"/>
+                    <apex:column value="{!e.Email__c}"/>
+                    <apex:column value="{!e.Department__c}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>
